@@ -110,19 +110,19 @@ def download_audio_from_url(url):
     
     # 2. Sadece Android İstemcisi Zorlaması ("The page needs to be reloaded" engeli için)
     ydl_opts = {
-        'format': 'bestaudio/best',
-        'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'}],
-        'outtmpl': 'temp_audio', 
-        'quiet': True, 
-        'noplaylist': True, 
-        'nocheckcertificate': True,
-        'extractor_args': {
-            'youtube': {
-                'player_client': ['android'], # Sadece Android API kullan (Browser testine takılmaz)
-                'player_skip': ['webpage']
-            }
+    'format': 'm4a/bestaudio/best',
+    'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'}],
+    'outtmpl': 'temp_audio',
+    'quiet': True,
+    'noplaylist': True,
+    'nocheckcertificate': True,
+    'extractor_args': {
+        'youtube': {
+            'player_client': ['web_creator', 'tv', 'mweb'],
+            'player_skip': ['webpage', 'configs']
         }
     }
+}
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(clean_url, download=True)
         raw_title = info.get('title', 'Bilinmeyen Şarkı')
