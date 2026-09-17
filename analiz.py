@@ -11,7 +11,6 @@ except ImportError:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "fpdf2"])
     from fpdf import FPDF
 
-# Bulut sunucularında yt-dlp'nin her zaman en güncel sürümde kalmasını sağlar (403 hatasına karşı)
 try:
     import yt_dlp
 except ImportError:
@@ -106,7 +105,10 @@ def download_audio_from_url(url):
     os.environ["YTDLP_JS_RUNTIME"] = "node" 
     if os.path.exists("temp_audio.mp3"): os.remove("temp_audio.mp3")
     
-    # 403 FORBIDDEN ÇÖZÜMÜ: IPv4 Zorlaması ve TV/iOS İstemci Simülasyonu
+    # 1. URL Temizleyici (m.youtube ve &list eklentilerini siler, saf link bırakır)
+    clean_url = url.replace("m.youtube.com", "www.youtube.com").split("&")[0]
+    
+    # 2. Sadece Android İstemcisi Zorlaması ("The page needs to be reloaded" engeli için)
     ydl_opts = {
         'format': 'bestaudio/best',
         'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'}],
@@ -114,19 +116,15 @@ def download_audio_from_url(url):
         'quiet': True, 
         'noplaylist': True, 
         'nocheckcertificate': True,
-        'source_address': '0.0.0.0', # Bulut sunucularındaki IPv6 banlarını aşar
         'extractor_args': {
             'youtube': {
-                'player_client': ['ios', 'tv', 'web_creator'], # Bot algılamasını atlatan istemciler
+                'player_client': ['android'], # Sadece Android API kullan (Browser testine takılmaz)
                 'player_skip': ['webpage']
             }
-        },
-        'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1',
         }
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=True)
+        info = ydl.extract_info(clean_url, download=True)
         raw_title = info.get('title', 'Bilinmeyen Şarkı')
         uploader = info.get('uploader', 'Bilinmeyen Sanatçı')
         artist = info.get('artist')
@@ -275,34 +273,30 @@ st.markdown("""
     header {visibility: hidden;}
     footer {visibility: hidden;}
 
-    /* Input (Arama ve URL) Alanlarındaki Siyah Çerçeveleri Kaldırma */
-    div[data-baseweb="input"], div[data-baseweb="input"] * {
-        background-color: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-    }
-
-    div[data-baseweb="input"] {
+    /* Safari Dark Mode Zırhı: Arama ve Link Kutularının Kesin Olarak Beyaz Yapılması */
+    [data-testid="stTextInput"] div[data-baseweb="input"] {
         background-color: #FFFFFF !important;
-        border: 1px solid #E5E5EA !important; /* iOS Gri Çerçeve */
+        border: 1px solid #E5E5EA !important;
         border-radius: 12px !important;
         box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
         transition: all 0.2s ease !important;
-        padding: 0 4px !important;
     }
     
-    div[data-baseweb="input"]:focus-within {
+    [data-testid="stTextInput"] div[data-baseweb="input"]:focus-within {
         border-color: #007AFF !important;
         box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2) !important;
     }
 
-    input, textarea {
+    [data-testid="stTextInput"] input {
+        background-color: #FFFFFF !important;
         color: #1D1D1F !important;
-        background-color: transparent !important;
+        -webkit-appearance: none !important; /* iPhone/Safari Siyah Kutu Engellemesi */
+        -webkit-text-fill-color: #1D1D1F !important; /* Zorunlu Yazı Rengi */
     }
     
-    input::placeholder {
+    [data-testid="stTextInput"] input::placeholder {
         color: #8E8E93 !important;
+        -webkit-text-fill-color: #8E8E93 !important;
         opacity: 1 !important;
     }
 
