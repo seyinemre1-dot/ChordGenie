@@ -11,13 +11,19 @@ except ImportError:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "fpdf2"])
     from fpdf import FPDF
 
+# Bulut sunucularında yt-dlp'nin her zaman en güncel sürümde kalmasını sağlar (403 hatasına karşı)
+try:
+    import yt_dlp
+except ImportError:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", "yt-dlp"])
+    import yt_dlp
+
 import streamlit as st
 import librosa
 import numpy as np
 from faster_whisper import WhisperModel
 import torch
 import scipy.signal
-import yt_dlp
 import streamlit.components.v1 as components
 
 # --- 1. SABİTLER VE SİSTEM ---
@@ -100,7 +106,7 @@ def download_audio_from_url(url):
     os.environ["YTDLP_JS_RUNTIME"] = "node" 
     if os.path.exists("temp_audio.mp3"): os.remove("temp_audio.mp3")
     
-    # 403 Forbidden ve Bot Engellerini Aşmak İçin Güncellenen yt-dlp Ayarları
+    # 403 FORBIDDEN ÇÖZÜMÜ: IPv4 Zorlaması ve TV/iOS İstemci Simülasyonu
     ydl_opts = {
         'format': 'bestaudio/best',
         'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'}],
@@ -108,15 +114,15 @@ def download_audio_from_url(url):
         'quiet': True, 
         'noplaylist': True, 
         'nocheckcertificate': True,
+        'source_address': '0.0.0.0', # Bulut sunucularındaki IPv6 banlarını aşar
         'extractor_args': {
             'youtube': {
-                'player_client': ['android', 'web'],
-                'player_skip': ['webpage', 'configs']
+                'player_client': ['ios', 'tv', 'web_creator'], # Bot algılamasını atlatan istemciler
+                'player_skip': ['webpage']
             }
         },
         'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
-            'Accept-Language': 'en-US,en;q=0.9',
+            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1',
         }
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -244,12 +250,12 @@ def fuzzy_search(query, song_db):
     results.sort(key=lambda x: x[0], reverse=True)
     return [item[1] for item in results]
 
-# --- 4. APPLE/macOS TASARIM (CSS ENJEKSİYONU - INPUTLAR GÜNCELLENDİ) ---
+# --- 4. APPLE/macOS TASARIM (CSS ENJEKSİYONU) ---
 st.set_page_config(page_title="ChordGenie Pro", layout="centered", initial_sidebar_state="collapsed")
 
 st.markdown("""
 <style>
-    /* Global Renk ve Arka Plan Sabitlemesi (Mobil Karanlık Mod Uyumlu) */
+    /* Global Renk ve Arka Plan Sabitlemesi */
     html, body, [class*="css"] {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif !important;
     }
@@ -269,25 +275,32 @@ st.markdown("""
     header {visibility: hidden;}
     footer {visibility: hidden;}
 
-    /* Arama ve URL Çubukları (Input Alanları) Arka Plan ve Yazı Rengi Kesin Çözüm */
-    div[data-baseweb="input"], input, textarea {
-        background-color: #FFFFFF !important;
-        color: #1D1D1F !important;
+    /* Input (Arama ve URL) Alanlarındaki Siyah Çerçeveleri Kaldırma */
+    div[data-baseweb="input"], div[data-baseweb="input"] * {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
     }
-    
+
     div[data-baseweb="input"] {
-        border: 1px solid #E5E5EA !important;
+        background-color: #FFFFFF !important;
+        border: 1px solid #E5E5EA !important; /* iOS Gri Çerçeve */
         border-radius: 12px !important;
         box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
-        transition: all 0.2s ease;
+        transition: all 0.2s ease !important;
+        padding: 0 4px !important;
     }
     
     div[data-baseweb="input"]:focus-within {
         border-color: #007AFF !important;
         box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2) !important;
     }
+
+    input, textarea {
+        color: #1D1D1F !important;
+        background-color: transparent !important;
+    }
     
-    /* Streamlit Input Placeholder (İpucu Metni) Rengi */
     input::placeholder {
         color: #8E8E93 !important;
         opacity: 1 !important;
