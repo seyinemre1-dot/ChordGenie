@@ -244,7 +244,7 @@ def fuzzy_search(query, song_db):
     results.sort(key=lambda x: x[0], reverse=True)
     return [item[1] for item in results]
 
-# --- 4. APPLE/macOS TASARIM (CSS ENJEKSİYONU - GÜNCELLENDİ) ---
+# --- 4. APPLE/macOS TASARIM (CSS ENJEKSİYONU - INPUTLAR GÜNCELLENDİ) ---
 st.set_page_config(page_title="ChordGenie Pro", layout="centered", initial_sidebar_state="collapsed")
 
 st.markdown("""
@@ -269,22 +269,28 @@ st.markdown("""
     header {visibility: hidden;}
     footer {visibility: hidden;}
 
-    /* Input Alanları */
-    div[data-baseweb="input"] {
+    /* Arama ve URL Çubukları (Input Alanları) Arka Plan ve Yazı Rengi Kesin Çözüm */
+    div[data-baseweb="input"], input, textarea {
         background-color: #FFFFFF !important;
+        color: #1D1D1F !important;
+    }
+    
+    div[data-baseweb="input"] {
         border: 1px solid #E5E5EA !important;
         border-radius: 12px !important;
         box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
         transition: all 0.2s ease;
     }
+    
     div[data-baseweb="input"]:focus-within {
         border-color: #007AFF !important;
         box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2) !important;
     }
     
-    /* Input İçindeki Yazı Rengi */
-    input {
-        color: #1D1D1F !important;
+    /* Streamlit Input Placeholder (İpucu Metni) Rengi */
+    input::placeholder {
+        color: #8E8E93 !important;
+        opacity: 1 !important;
     }
 
     /* Buton Tasarımları */
