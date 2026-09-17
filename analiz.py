@@ -244,13 +244,17 @@ def fuzzy_search(query, song_db):
     results.sort(key=lambda x: x[0], reverse=True)
     return [item[1] for item in results]
 
-# --- 4. APPLE/macOS TASARIM (CSS ENJEKSİYONU) ---
+# --- 4. APPLE/macOS TASARIM (CSS ENJEKSİYONU - GÜNCELLENDİ) ---
 st.set_page_config(page_title="ChordGenie Pro", layout="centered", initial_sidebar_state="collapsed")
 
 st.markdown("""
 <style>
+    /* Global Renk ve Arka Plan Sabitlemesi (Mobil Karanlık Mod Uyumlu) */
     html, body, [class*="css"] {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif !important;
+    }
+    
+    .stApp {
         background-color: #F5F5F7 !important;
         color: #1D1D1F !important;
     }
@@ -259,11 +263,13 @@ st.markdown("""
         padding-top: 3rem !important; 
         padding-bottom: 2rem !important;
         max-width: 800px !important;
+        background-color: #F5F5F7 !important;
     }
 
     header {visibility: hidden;}
     footer {visibility: hidden;}
 
+    /* Input Alanları */
     div[data-baseweb="input"] {
         background-color: #FFFFFF !important;
         border: 1px solid #E5E5EA !important;
@@ -275,7 +281,13 @@ st.markdown("""
         border-color: #007AFF !important;
         box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2) !important;
     }
+    
+    /* Input İçindeki Yazı Rengi */
+    input {
+        color: #1D1D1F !important;
+    }
 
+    /* Buton Tasarımları */
     div.stButton > button { 
         background-color: #FFFFFF !important;
         color: #007AFF !important;
@@ -308,6 +320,14 @@ st.markdown("""
 
     div[data-testid="stHorizontalBlock"] { gap: 8px !important; }
 
+    /* Şarkı Sözü ve Akor Konteyneri */
+    .lyrics-container {
+        background-color: #FFFFFF !important;
+        border-radius: 20px !important;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.04) !important;
+        padding: 20px !important;
+    }
+
     .chord-wrapper { 
         position: relative; 
         display: inline-block; 
@@ -315,7 +335,7 @@ st.markdown("""
     }
     .chord-tooltip {
         visibility: hidden; 
-        background-color: rgba(255, 255, 255, 0.75);
+        background-color: rgba(255, 255, 255, 0.9);
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
         border: 1px solid rgba(0,0,0,0.08); 
@@ -337,8 +357,8 @@ st.markdown("""
         transform: translateX(-50%) translateY(0);
     }
     
-    .lyric-text { color: #1D1D1F; font-weight: 500; letter-spacing: -0.2px; }
-    .chord-text { color: #FF3B30; font-weight: 700; letter-spacing: -0.5px; }
+    .lyric-text { color: #1D1D1F !important; font-weight: 500; letter-spacing: -0.2px; }
+    .chord-text { color: #FF3B30 !important; font-weight: 700; letter-spacing: -0.5px; }
 </style>
 """, unsafe_allow_html=True)
 
