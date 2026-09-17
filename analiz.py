@@ -100,6 +100,7 @@ def download_audio_from_url(url):
     os.environ["YTDLP_JS_RUNTIME"] = "node" 
     if os.path.exists("temp_audio.mp3"): os.remove("temp_audio.mp3")
     
+    # 403 Forbidden ve Bot Engellerini Aşmak İçin Güncellenen yt-dlp Ayarları
     ydl_opts = {
         'format': 'bestaudio/best',
         'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'}],
@@ -107,9 +108,15 @@ def download_audio_from_url(url):
         'quiet': True, 
         'noplaylist': True, 
         'nocheckcertificate': True,
-        'extractor_args': {'youtube': ['player_client=android', 'player_skip=web']},
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android', 'web'],
+                'player_skip': ['webpage', 'configs']
+            }
+        },
         'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+            'Accept-Language': 'en-US,en;q=0.9',
         }
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -530,9 +537,6 @@ elif st.session_state.view_mode == "home":
                 chroma = librosa.feature.chroma_cqt(y=y_harm, sr=sr, tuning=sapma, fmin=librosa.note_to_hz('E2'))
                 chroma_temiz = scipy.signal.medfilt2d(chroma, kernel_size=(1, 15))
                 
-                # ÖNEMLİ GÜNCELLEME: VAD (Ses Aktivite Filtresi) KAPATILDI. 
-                # James Brown gibi bağırarak okunan şarkılarda vokalleri kesmemesi için devre dışı bırakıldı.
-                # Ayrıca model takılmasın diye condition_on_previous_text=False ve temperature fallback eklendi.
                 segments, _ = model.transcribe(
                     "temp_audio.mp3", 
                     language=None, 
@@ -547,7 +551,6 @@ elif st.session_state.view_mode == "home":
                 for s in segments:
                     for w in s.words:
                         clean_w = w.word.strip()
-                        # Japonca/Kiril halüsinasyonlarını engelleyen Latin-Türkçe Regex kalkanı (Aynen korundu).
                         kontrol = re.sub(r'[^a-zA-Z0-9\sğüşıöçĞÜŞİÖÇ\'\’]', '', clean_w).strip()
                         
                         if len(kontrol) > 0: 
