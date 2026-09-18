@@ -108,7 +108,7 @@ def download_audio_from_url(url):
     clean_url = url.replace("m.youtube.com", "www.youtube.com").split("&")[0]
     
     ydl_opts = {
-        'format': 'ba/b', # Hem format hatasını engeller hem esneklik sağlar
+        'format': 'ba/b', 
         'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'}],
         'outtmpl': 'temp_audio', 
         'quiet': True, 
@@ -117,14 +117,11 @@ def download_audio_from_url(url):
         'cookiefile': 'cookies.txt', 
         'extractor_args': {
             'youtube': {
-                # KESİN ÇÖZÜM: Web istemcisi tamamen silindi. Sadece iOS ve TV API'leri kullanılacak.
                 'player_client': ['ios', 'tv', 'android'],
-                # JS doğrulama testlerini (The page needs to be reloaded) atlamak için sayfa indirmesi yasaklandı.
                 'player_skip': ['webpage', 'configs', 'js']
             }
         },
         'http_headers': {
-            # iOS API'sini desteklemek için User-Agent bir iPhone tarayıcısı olarak güncellendi
             'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1',
             'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7',
         }
@@ -305,9 +302,39 @@ st.markdown("""
         -webkit-text-fill-color: #8E8E93 !important;
         opacity: 1 !important;
     }
+    
+    /* YENİ: Dosya Yükleme (Uploader) Kutusunu Maksimum Kompakt Hale Getirme */
+    [data-testid="stFileUploadDropzone"] {
+        background-color: #FFFFFF !important;
+        border: 1px dashed #007AFF !important;
+        border-radius: 12px !important;
+        padding: 8px 12px !important;
+        transition: all 0.2s ease !important;
+        min-height: 42px !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    [data-testid="stFileUploadDropzone"]:hover {
+        background-color: #F2F2F7 !important;
+    }
+    [data-testid="stFileUploadDropzone"] * {
+        color: #1D1D1F !important;
+    }
+    /* Dosya yükleyicideki gereksiz 'Drag and drop' yazılarını küçültme */
+    [data-testid="stFileUploadDropzone"] div > small {
+        display: none !important;
+    }
+    
+    /* YENİ: Streamlit Form Çerçevelerini Tamamen Görünmez Yapma */
+    [data-testid="stForm"] {
+        border: none !important;
+        padding: 0 !important;
+        background-color: transparent !important;
+    }
 
     /* Buton Tasarımları */
-    div.stButton > button { 
+    div.stButton > button, div[data-testid="stFormSubmitButton"] > button { 
         background-color: #FFFFFF !important;
         color: #007AFF !important;
         border: 1px solid #E5E5EA !important;
@@ -320,22 +347,22 @@ st.markdown("""
         white-space: nowrap !important;
     }
     
-    div.stButton > button p {
+    div.stButton > button p, div[data-testid="stFormSubmitButton"] > button p {
         font-size: 13px !important;
         white-space: nowrap !important;
         margin: 0 !important;
     }
 
-    div.stButton > button:hover { background-color: #F2F2F7 !important; }
-    div.stButton > button:active { transform: scale(0.97) !important; }
+    div.stButton > button:hover, div[data-testid="stFormSubmitButton"] > button:hover { background-color: #F2F2F7 !important; }
+    div.stButton > button:active, div[data-testid="stFormSubmitButton"] > button:active { transform: scale(0.97) !important; }
     
-    div.stButton > button[kind="primary"] {
+    div.stButton > button[kind="primary"], div[data-testid="stFormSubmitButton"] > button[kind="primary"] {
         background-color: #007AFF !important;
         color: #FFFFFF !important;
         border: none !important;
         box-shadow: 0 4px 10px rgba(0, 122, 255, 0.2) !important;
     }
-    div.stButton > button[kind="primary"]:hover { background-color: #0066D6 !important; }
+    div.stButton > button[kind="primary"]:hover, div[data-testid="stFormSubmitButton"] > button[kind="primary"]:hover { background-color: #0066D6 !important; }
 
     div[data-testid="stHorizontalBlock"] { gap: 8px !important; }
 
@@ -410,18 +437,9 @@ elif st.session_state.view_mode == "home":
     
     st.markdown("<h2 style='text-align: center; font-weight: 800; letter-spacing: -1px; color: #1D1D1F; margin-bottom: 20px;'>ChordGenie<span style='color: #007AFF;'>.</span></h2>", unsafe_allow_html=True)
 
-    col_search, col_url = st.columns(2)
+    # 1. ARAMA ÇUBUĞU (Form dışında, anında tepki verir)
+    search_query = st.text_input("Akıllı Arama", placeholder="🔍 Kütüphanede ara...", label_visibility="collapsed")
     
-    with col_search:
-        search_query = st.text_input("Akıllı Arama", placeholder="Kütüphanede ara...", label_visibility="collapsed")
-    
-    with col_url:
-        sub_c1, sub_c2 = st.columns([3, 1])
-        with sub_c1:
-            url_input = st.text_input("Bağlantı", placeholder="YouTube URL...", label_visibility="collapsed")
-        with sub_c2:
-            analiz_tetiklendi = st.button("Analiz", use_container_width=True, type="primary")
-
     if search_query:
         search_results = fuzzy_search(search_query, st.session_state.global_song_db)
         if search_results:
@@ -434,14 +452,25 @@ elif st.session_state.view_mode == "home":
         else:
             st.markdown("<p style='font-size: 13px; color: #FF3B30; margin-top: 10px;'>Kütüphanede eşleşen şarkı bulunamadı.</p>", unsafe_allow_html=True)
 
+    # 2. YENİ ANALİZ FORMU (Kompakt Yan Yana Görünüm & Enter Desteği)
+    st.markdown("<p style='font-size: 13px; font-weight: 600; color: #8E8E93; margin-top: 15px; margin-bottom: 5px; padding-left: 2px;'>Yeni Şarkı Analiz Et</p>", unsafe_allow_html=True)
+    
+    with st.form(key="analiz_form", border=False):
+        col_url, col_file = st.columns([1, 1])
+        with col_url:
+            url_input = st.text_input("Bağlantı", placeholder="🔗 YouTube URL...", label_visibility="collapsed")
+        with col_file:
+            uploaded_file = st.file_uploader("Dosya Yükle", type=["mp3", "wav", "m4a", "ogg"], label_visibility="collapsed")
+        
+        analiz_tetiklendi = st.form_submit_button("Analiz Et", type="primary", use_container_width=True)
+
     st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
 
     if st.session_state.analiz_verisi:
         st.markdown("<br>", unsafe_allow_html=True)
         ca, cb, cc, cd, ce = st.columns([1, 1, 1, 1, 1])
         with ca:
-            if st.button("📥 PDF İndir", use_container_width=True):
-                pass
+            if st.button("📥 PDF İndir", use_container_width=True): pass
         with cb:
             if st.button("⏱ Metronom", use_container_width=True, type="primary" if st.session_state.metro_on else "secondary"):
                 st.session_state.metro_on = not st.session_state.metro_on
@@ -468,7 +497,6 @@ elif st.session_state.view_mode == "home":
                 parent.window.currentBPM = val;
                 const disp = window.parent.document.getElementById('bpm-display');
                 if(disp) disp.innerText = val + " BPM";
-                
                 if (window.parent.metronomInterval) {{
                     window.parent.restartMetronom(val);
                 }}
@@ -498,52 +526,33 @@ elif st.session_state.view_mode == "home":
             </div>
             <script>
                 window.parent.currentBPM = {bpm};
-                
                 function playClick() {{
                     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                     const osc = audioCtx.createOscillator();
                     const envelope = audioCtx.createGain();
-                    
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-                    
                     envelope.gain.setValueAtTime(1, audioCtx.currentTime);
                     envelope.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
-                    
                     osc.connect(envelope);
                     envelope.connect(audioCtx.destination);
-                    
                     osc.start();
                     osc.stop(audioCtx.currentTime + 0.05);
                 }}
-                
                 window.parent.restartMetronom = function(newBpm) {{
-                    if (window.parent.metronomInterval) {{
-                        clearInterval(window.parent.metronomInterval);
-                    }}
+                    if (window.parent.metronomInterval) {{ clearInterval(window.parent.metronomInterval); }}
                     const interval = (60 / newBpm) * 1000;
                     window.parent.metronomInterval = setInterval(playClick, interval);
                 }};
-                
                 window.parent.restartMetronom(window.parent.currentBPM);
             </script>
             """
             components.html(metronom_html, height=30)
         else:
-            stop_html = """
-            <script>
-                if (window.parent.metronomInterval) {
-                    clearInterval(window.parent.metronomInterval);
-                    window.parent.metronomInterval = null;
-                }
-            </script>
-            """
-            components.html(stop_html, height=0)
+            components.html("<script>if (window.parent.metronomInterval) { clearInterval(window.parent.metronomInterval); window.parent.metronomInterval = null; }</script>", height=0)
 
         st.markdown("<p style='text-align: center; font-weight: 600; font-size: 12px; margin-top: 15px; margin-bottom: 5px; color: #8E8E93; text-transform: uppercase; letter-spacing: 1px;'>Transpoze</p>", unsafe_allow_html=True)
-        
         sirali_notalar = (NOTALAR_STANDART[NOTALAR_STANDART.index(st.session_state.orig_key):] + NOTALAR_STANDART[:NOTALAR_STANDART.index(st.session_state.orig_key)]) if st.session_state.orig_key in NOTALAR_STANDART else NOTALAR_STANDART
-        
         t_cols = st.columns(len(sirali_notalar))
         for i, nota in enumerate(sirali_notalar):
             with t_cols[i]:
@@ -552,117 +561,124 @@ elif st.session_state.view_mode == "home":
                     set_target_key(nota)
 
     if analiz_tetiklendi:
-        with st.spinner("Yapay zeka ortak kütüphane için işliyor..."):
-            try:
-                artist_name, track_name = "Bilinmeyen Sanatçı", "Bilinmeyen Şarkı"
-                if url_input: 
-                    artist_name, track_name = download_audio_from_url(url_input)
-
-                y, sr = librosa.load("temp_audio.mp3")
-                tempo_out, beat_frames = librosa.beat.beat_track(y=y, sr=sr)
-                st.session_state.detected_bpm = int(np.mean(tempo_out))
-                st.session_state.user_bpm = st.session_state.detected_bpm
-                
-                model = get_fast_model()
-                
-                nyq = 0.5 * sr
-                low = 150.0 / nyq
-                high = 1000.0 / nyq
-                b, a = scipy.signal.butter(4, [low, high], btype='band')
-                y_gitar = scipy.signal.filtfilt(b, a, y)
-                y_harm = librosa.effects.hpss(y_gitar, margin=4.0)[0]
-                
-                sapma = librosa.estimate_tuning(y=y_harm, sr=sr)
-                chroma = librosa.feature.chroma_cqt(y=y_harm, sr=sr, tuning=sapma, fmin=librosa.note_to_hz('E2'))
-                chroma_temiz = scipy.signal.medfilt2d(chroma, kernel_size=(1, 15))
-                
-                segments, _ = model.transcribe(
-                    "temp_audio.mp3", 
-                    language=None, 
-                    word_timestamps=True, 
-                    beam_size=5, 
-                    condition_on_previous_text=False,
-                    temperature=[0.0, 0.2, 0.4, 0.6, 0.8],
-                    vad_filter=False
-                )
-                
-                all_words = []
-                for s in segments:
-                    for w in s.words:
-                        clean_w = w.word.strip()
-                        kontrol = re.sub(r'[^a-zA-Z0-9\sğüşıöçĞÜŞİÖÇ\'\’]', '', clean_w).strip()
-                        
-                        if len(kontrol) > 0: 
-                            all_words.append({"start": w.start, "end": w.end, "word": kontrol})
-                
-                logical_rows, temp_row, last_end = [], [], 0
-                for w in all_words:
-                    if (w["start"] - last_end > 2.0 or len(temp_row) >= 12) and temp_row:
-                        logical_rows.append(temp_row); temp_row = []
-                    temp_row.append(w); last_end = w["end"]
-                if temp_row: logical_rows.append(temp_row)
-                
-                final_sheet, son_akor, first_key = [], None, ""
-                for row in logical_rows:
-                    row_content = []
-                    for i, word in enumerate(row):
-                        idx = np.searchsorted(librosa.times_like(chroma_temiz, sr=sr), word["start"])
-                        avg = np.mean(chroma_temiz[:, idx:idx+5], axis=1)
-                        kalibre_avg_norm = avg / (np.linalg.norm(avg) + 1e-10)
-                        
-                        scores = np.dot(CHORD_TEMPLATES_NORM, kalibre_avg_norm)
-                        best_idx = np.argmax(scores)
-                        max_score = scores[best_idx]
-                        
-                        baskin = CHORD_LABELS[best_idx] if max_score > 0.62 else ""
-                        
-                        if not first_key and baskin: first_key = baskin.replace('m', '')
-                        
-                        display = ""
-                        if baskin and baskin != son_akor:
-                            display = baskin
-                            son_akor = baskin
-                        
-                        orijinal_kelime = word["word"]
-                        if i == 0 and len(orijinal_kelime) > 0: orijinal_kelime = orijinal_kelime[0].upper() + orijinal_kelime[1:]
-                        if orijinal_kelime: row_content.append({"a": display, "k": orijinal_kelime})
+        if not url_input and not uploaded_file:
+            st.warning("⚠️ Lütfen bir YouTube bağlantısı girin veya cihazınızdan bir ses dosyası yükleyin.")
+        else:
+            with st.spinner("Yapay zeka analiz ediyor, lütfen bekleyin..."):
+                try:
+                    artist_name, track_name = "Bilinmeyen Sanatçı", "Bilinmeyen Şarkı"
                     
-                    if row_content:
-                        row_txt = " ".join([x['k'] for x in row_content])
-                        is_rep = False
-                        for j, old_item in enumerate(final_sheet):
-                            if len(old_item) == 3 and difflib.SequenceMatcher(None, row_txt, old_item[0]).ratio() > 0.8:
-                                final_sheet[j] = [old_item[0], old_item[1], old_item[2] + 1]; is_rep = True; break
-                        if not is_rep: final_sheet.append([row_txt, row_content, 1])
+                    if uploaded_file is not None:
+                        with open("temp_audio.mp3", "wb") as f:
+                            f.write(uploaded_file.getbuffer())
+                        artist_name = "Yerel Kayıt"
+                        track_name = uploaded_file.name.rsplit('.', 1)[0][:30] 
+                    elif url_input: 
+                        artist_name, track_name = download_audio_from_url(url_input)
 
-                detected_key = first_key if first_key in INDEX_TO_KEY else "C"
-                
-                existing_song = next((s for s in st.session_state.global_song_db if s['title'].lower() == track_name.lower() and s['artist'].lower() == artist_name.lower()), None)
-                
-                new_version_data = {
-                    "name": f"Versiyon (AI Analiz)",
-                    "orig_key": detected_key,
-                    "analiz_verisi": final_sheet
-                }
+                    y, sr = librosa.load("temp_audio.mp3")
+                    tempo_out, beat_frames = librosa.beat.beat_track(y=y, sr=sr)
+                    st.session_state.detected_bpm = int(np.mean(tempo_out))
+                    st.session_state.user_bpm = st.session_state.detected_bpm
+                    
+                    model = get_fast_model()
+                    
+                    nyq = 0.5 * sr
+                    low = 150.0 / nyq
+                    high = 1000.0 / nyq
+                    b, a = scipy.signal.butter(4, [low, high], btype='band')
+                    y_gitar = scipy.signal.filtfilt(b, a, y)
+                    y_harm = librosa.effects.hpss(y_gitar, margin=4.0)[0]
+                    
+                    sapma = librosa.estimate_tuning(y=y_harm, sr=sr)
+                    chroma = librosa.feature.chroma_cqt(y=y_harm, sr=sr, tuning=sapma, fmin=librosa.note_to_hz('E2'))
+                    chroma_temiz = scipy.signal.medfilt2d(chroma, kernel_size=(1, 15))
+                    
+                    segments, _ = model.transcribe(
+                        "temp_audio.mp3", 
+                        language=None, 
+                        word_timestamps=True, 
+                        beam_size=5, 
+                        condition_on_previous_text=False,
+                        temperature=[0.0, 0.2, 0.4, 0.6, 0.8],
+                        vad_filter=False
+                    )
+                    
+                    all_words = []
+                    for s in segments:
+                        for w in s.words:
+                            clean_w = w.word.strip()
+                            kontrol = re.sub(r'[^a-zA-Z0-9\sğüşıöçĞÜŞİÖÇ\'\’]', '', clean_w).strip()
+                            if len(kontrol) > 0: 
+                                all_words.append({"start": w.start, "end": w.end, "word": kontrol})
+                    
+                    logical_rows, temp_row, last_end = [], [], 0
+                    for w in all_words:
+                        if (w["start"] - last_end > 2.0 or len(temp_row) >= 12) and temp_row:
+                            logical_rows.append(temp_row); temp_row = []
+                        temp_row.append(w); last_end = w["end"]
+                    if temp_row: logical_rows.append(temp_row)
+                    
+                    final_sheet, son_akor, first_key = [], None, ""
+                    for row in logical_rows:
+                        row_content = []
+                        for i, word in enumerate(row):
+                            idx = np.searchsorted(librosa.times_like(chroma_temiz, sr=sr), word["start"])
+                            avg = np.mean(chroma_temiz[:, idx:idx+5], axis=1)
+                            kalibre_avg_norm = avg / (np.linalg.norm(avg) + 1e-10)
+                            
+                            scores = np.dot(CHORD_TEMPLATES_NORM, kalibre_avg_norm)
+                            best_idx = np.argmax(scores)
+                            max_score = scores[best_idx]
+                            
+                            baskin = CHORD_LABELS[best_idx] if max_score > 0.62 else ""
+                            if not first_key and baskin: first_key = baskin.replace('m', '')
+                            
+                            display = ""
+                            if baskin and baskin != son_akor:
+                                display = baskin
+                                son_akor = baskin
+                            
+                            orijinal_kelime = word["word"]
+                            if i == 0 and len(orijinal_kelime) > 0: orijinal_kelime = orijinal_kelime[0].upper() + orijinal_kelime[1:]
+                            if orijinal_kelime: row_content.append({"a": display, "k": orijinal_kelime})
+                        
+                        if row_content:
+                            row_txt = " ".join([x['k'] for x in row_content])
+                            is_rep = False
+                            for j, old_item in enumerate(final_sheet):
+                                if len(old_item) == 3 and difflib.SequenceMatcher(None, row_txt, old_item[0]).ratio() > 0.8:
+                                    final_sheet[j] = [old_item[0], old_item[1], old_item[2] + 1]; is_rep = True; break
+                            if not is_rep: final_sheet.append([row_txt, row_content, 1])
 
-                if existing_song:
-                    new_version_data["name"] = f"Versiyon {len(existing_song['versions']) + 1}"
-                    existing_song['versions'].append(new_version_data)
-                    target_song = existing_song
-                    target_v_idx = len(existing_song['versions']) - 1
-                else:
-                    new_song_entry = {
-                        "artist": artist_name,
-                        "title": track_name,
-                        "versions": [new_version_data]
+                    detected_key = first_key if first_key in INDEX_TO_KEY else "C"
+                    
+                    existing_song = next((s for s in st.session_state.global_song_db if s['title'].lower() == track_name.lower() and s['artist'].lower() == artist_name.lower()), None)
+                    
+                    new_version_data = {
+                        "name": f"Versiyon (AI Analiz)",
+                        "orig_key": detected_key,
+                        "analiz_verisi": final_sheet
                     }
-                    st.session_state.global_song_db.append(new_song_entry)
-                    target_song = new_song_entry
-                    target_v_idx = 0
 
-                load_song_from_db(target_song, target_v_idx)
+                    if existing_song:
+                        new_version_data["name"] = f"Versiyon {len(existing_song['versions']) + 1}"
+                        existing_song['versions'].append(new_version_data)
+                        target_song = existing_song
+                        target_v_idx = len(existing_song['versions']) - 1
+                    else:
+                        new_song_entry = {
+                            "artist": artist_name,
+                            "title": track_name,
+                            "versions": [new_version_data]
+                        }
+                        st.session_state.global_song_db.append(new_song_entry)
+                        target_song = new_song_entry
+                        target_v_idx = 0
 
-            except Exception as e: st.error(f"Bir sorun oluştu: {e}")
+                    load_song_from_db(target_song, target_v_idx)
+
+                except Exception as e: st.error(f"Bir sorun oluştu: {e}")
 
     # --- 6. GÖRSELLEŞTİRME, VERSİYON SEÇİCİ VE BAŞLIK ---
     if st.session_state.analiz_verisi:
@@ -694,7 +710,6 @@ elif st.session_state.view_mode == "home":
             
             for w in words:
                 t_chord = transpose_chord(w.get("a", ""), st.session_state.orig_key, st.session_state.target_key)
-                
                 if t_chord:
                     svg_code = get_chord_svg(t_chord)
                     if svg_code:
