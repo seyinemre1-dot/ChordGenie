@@ -108,13 +108,13 @@ def download_audio_from_url(url):
     clean_url = url.replace("m.youtube.com", "www.youtube.com").split("&")[0]
     
     ydl_opts = {
-        'format': 'bestaudio/best',
+        'format': 'ba/b', # ÇÖZÜM: Yalnızca en iyi sesi değil, mevcut olan en iyi genel formatı yakalaması için esnetildi.
         'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'}],
         'outtmpl': 'temp_audio', 
         'quiet': True, 
         'noplaylist': True, 
         'nocheckcertificate': True,
-        'cookiefile': 'cookies.txt',  # KİLİT NOKTA: YouTube oturumunuzu doğrular
+        'cookiefile': 'cookies.txt', 
         'extractor_args': {
             'youtube': {
                 'player_client': ['android', 'web'],
@@ -140,6 +140,7 @@ def download_audio_from_url(url):
             return parts[0].strip(), parts[1].strip()
         else:
             return uploader.replace(" - Topic", "").strip(), raw_title.strip()
+        
     # 2. Sadece Android İstemcisi Zorlaması ("The page needs to be reloaded" engeli için)
     ydl_opts = {
         'format': 'bestaudio/best',
