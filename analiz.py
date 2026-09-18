@@ -107,8 +107,9 @@ def download_audio_from_url(url):
     
     clean_url = url.replace("m.youtube.com", "www.youtube.com").split("&")[0]
     
+    # 403 ve Format hatalarına karşı en geniş toleranslı ayarlar
     ydl_opts = {
-        'format': 'ba/b', # ÇÖZÜM: Yalnızca en iyi sesi değil, mevcut olan en iyi genel formatı yakalaması için esnetildi.
+        'format': 'best', # Sadece sesi değil, en iyi formatı çeker ve ffmpeg ile mp3'e dönüştürür
         'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'}],
         'outtmpl': 'temp_audio', 
         'quiet': True, 
@@ -124,36 +125,6 @@ def download_audio_from_url(url):
         'http_headers': {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7',
-        }
-    }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(clean_url, download=True)
-        raw_title = info.get('title', 'Bilinmeyen Şarkı')
-        uploader = info.get('uploader', 'Bilinmeyen Sanatçı')
-        artist = info.get('artist')
-        track = info.get('track')
-
-        if artist and track:
-            return artist.strip(), track.strip()
-        elif " - " in raw_title:
-            parts = raw_title.split(" - ", 1)
-            return parts[0].strip(), parts[1].strip()
-        else:
-            return uploader.replace(" - Topic", "").strip(), raw_title.strip()
-        
-    # 2. Sadece Android İstemcisi Zorlaması ("The page needs to be reloaded" engeli için)
-    ydl_opts = {
-        'format': 'bestaudio/best',
-        'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'}],
-        'outtmpl': 'temp_audio', 
-        'quiet': True, 
-        'noplaylist': True, 
-        'nocheckcertificate': True,
-        'extractor_args': {
-            'youtube': {
-                'player_client': ['android'], # Sadece Android API kullan (Browser testine takılmaz)
-                'player_skip': ['webpage']
-            }
         }
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -323,8 +294,8 @@ st.markdown("""
     [data-testid="stTextInput"] input {
         background-color: #FFFFFF !important;
         color: #1D1D1F !important;
-        -webkit-appearance: none !important; /* iPhone/Safari Siyah Kutu Engellemesi */
-        -webkit-text-fill-color: #1D1D1F !important; /* Zorunlu Yazı Rengi */
+        -webkit-appearance: none !important; 
+        -webkit-text-fill-color: #1D1D1F !important; 
     }
     
     [data-testid="stTextInput"] input::placeholder {
