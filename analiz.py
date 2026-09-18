@@ -107,9 +107,9 @@ def download_audio_from_url(url):
     
     clean_url = url.replace("m.youtube.com", "www.youtube.com").split("&")[0]
     
-    # 403 ve Format hatalarına karşı en geniş toleranslı ayarlar
     ydl_opts = {
-        'format': 'best', # Sadece sesi değil, en iyi formatı çeker ve ffmpeg ile mp3'e dönüştürür
+        # KESİN ÇÖZÜM 1: Sadece best değil, bulabildiği tüm ses/video varyasyonlarını denemesi için ağ genişletildi.
+        'format': 'bestaudio/best/ba/b', 
         'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'}],
         'outtmpl': 'temp_audio', 
         'quiet': True, 
@@ -118,7 +118,8 @@ def download_audio_from_url(url):
         'cookiefile': 'cookies.txt', 
         'extractor_args': {
             'youtube': {
-                'player_client': ['android', 'web'],
+                # KESİN ÇÖZÜM 2: 'android' istemcisi resmi şarkılarda format gizlediği için 'tv' ve 'web' ile değiştirildi.
+                'player_client': ['tv', 'web_creator', 'web'],
                 'player_skip': ['webpage']
             }
         },
