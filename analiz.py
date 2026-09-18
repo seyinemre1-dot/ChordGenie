@@ -108,8 +108,7 @@ def download_audio_from_url(url):
     clean_url = url.replace("m.youtube.com", "www.youtube.com").split("&")[0]
     
     ydl_opts = {
-        # KESİN ÇÖZÜM 1: Sadece best değil, bulabildiği tüm ses/video varyasyonlarını denemesi için ağ genişletildi.
-        'format': 'bestaudio/best/ba/b', 
+        'format': 'ba/b', # Hem format hatasını engeller hem esneklik sağlar
         'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'}],
         'outtmpl': 'temp_audio', 
         'quiet': True, 
@@ -118,13 +117,15 @@ def download_audio_from_url(url):
         'cookiefile': 'cookies.txt', 
         'extractor_args': {
             'youtube': {
-                # KESİN ÇÖZÜM 2: 'android' istemcisi resmi şarkılarda format gizlediği için 'tv' ve 'web' ile değiştirildi.
-                'player_client': ['tv', 'web_creator', 'web'],
-                'player_skip': ['webpage']
+                # KESİN ÇÖZÜM: Web istemcisi tamamen silindi. Sadece iOS ve TV API'leri kullanılacak.
+                'player_client': ['ios', 'tv', 'android'],
+                # JS doğrulama testlerini (The page needs to be reloaded) atlamak için sayfa indirmesi yasaklandı.
+                'player_skip': ['webpage', 'configs', 'js']
             }
         },
         'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            # iOS API'sini desteklemek için User-Agent bir iPhone tarayıcısı olarak güncellendi
+            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1',
             'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7',
         }
     }
