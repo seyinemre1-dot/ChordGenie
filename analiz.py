@@ -105,9 +105,41 @@ def download_audio_from_url(url):
     os.environ["YTDLP_JS_RUNTIME"] = "node" 
     if os.path.exists("temp_audio.mp3"): os.remove("temp_audio.mp3")
     
-    # 1. URL Temizleyici (m.youtube ve &list eklentilerini siler, saf link bırakır)
     clean_url = url.replace("m.youtube.com", "www.youtube.com").split("&")[0]
     
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'}],
+        'outtmpl': 'temp_audio', 
+        'quiet': True, 
+        'noplaylist': True, 
+        'nocheckcertificate': True,
+        'cookiefile': 'cookies.txt',  # KİLİT NOKTA: YouTube oturumunuzu doğrular
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android', 'web'],
+                'player_skip': ['webpage']
+            }
+        },
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7',
+        }
+    }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(clean_url, download=True)
+        raw_title = info.get('title', 'Bilinmeyen Şarkı')
+        uploader = info.get('uploader', 'Bilinmeyen Sanatçı')
+        artist = info.get('artist')
+        track = info.get('track')
+
+        if artist and track:
+            return artist.strip(), track.strip()
+        elif " - " in raw_title:
+            parts = raw_title.split(" - ", 1)
+            return parts[0].strip(), parts[1].strip()
+        else:
+            return uploader.replace(" - Topic", "").strip(), raw_title.strip()
     # 2. Sadece Android İstemcisi Zorlaması ("The page needs to be reloaded" engeli için)
     ydl_opts = {
         'format': 'bestaudio/best',
